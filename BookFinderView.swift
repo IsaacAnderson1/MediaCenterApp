@@ -27,6 +27,7 @@ struct BookFinderView: View {
                         .padding()
                 }
                 .listStyle(PlainListStyle())
+                taskBar()
             }
             .navigationBarTitle(Text("Search Books"), displayMode: .large)
             .toolbar {
