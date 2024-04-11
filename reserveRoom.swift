@@ -7,6 +7,7 @@ struct reserveRoom: View {
     @State private var selectedDate = Date()
     @State private var showingDatePicker = false
     let maxReservationDays: Int = 7
+
     var lastValidDate: Date {
         Calendar.current.date(byAdding: .day, value: maxReservationDays, to: Date()) ?? Date()
     }
@@ -14,8 +15,6 @@ struct reserveRoom: View {
     var body: some View {
         NavigationView {
             VStack {
-                headerView
-
                 Button(action: {
                     showingDatePicker.toggle()
                 }) {
@@ -44,27 +43,12 @@ struct reserveRoom: View {
                     }
                 }
                 .padding(.horizontal)
+                taskBar()
             }
             .navigationTitle("EPHS Media Center")
             .navigationBarTitleDisplayMode(.inline)
             .background(Color(.systemGray6))  // General background color for the view
         }
-    }
-
-    private var headerView: some View {
-        HStack {
-            Text("Signed In As: User")
-            Spacer()
-            Button(action: {
-                // Action for settings or logout
-            }) {
-                Image(systemName: "person.crop.circle")
-                    .resizable()
-                    .frame(width: 24, height: 24)
-            }
-        }
-        .padding()
-        .background(Color(.systemGray4))  // Changed to a slightly darker grey to differentiate
     }
 
     private func periodView(for period: Int) -> some View {
@@ -84,7 +68,7 @@ struct reserveRoom: View {
                         reserveRoom(period: period, room: room)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(Color.red)  // Keeping the button tint red for contrast
+                    .tint(customRed)  // Using custom red color
                 }
                 .padding(.vertical, 4)
                 .padding(.horizontal)
@@ -104,6 +88,11 @@ struct reserveRoom: View {
         if daysAhead <= maxReservationDays {
             roomStatus[period-1][room-1] = (roomStatus[period-1][room-1] == "Open") ? "Reserved" : "Open"
         }
+    }
+
+    // Define the custom red color using provided RGB values
+    var customRed: Color {
+        Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
     }
 }
 
