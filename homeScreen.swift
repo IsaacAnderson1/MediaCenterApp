@@ -8,19 +8,23 @@ struct homeScreen: View {
         NavigationView {
             VStack {
                 VStack(alignment: .leading, spacing: 20) {
-                    SectionView(
+                    SectionView2(
                         title: "Find A Book",
                         description: "See if the media center has a book and where it might be.",
                         buttonText: "Find a Book",
-                        buttonAction: { /* Navigate to book finder */ },
+                        buttonAction: {
+                            // Navigate to book finder
+                        },
                         buttonColor: customRed
                     )
                     
-                    SectionView(
+                    SectionView1(
                         title: "Media Center Account",
                         description: "See what books you have checked out, what fees you have to pay, etc.",
                         buttonText: "Account",
-                        buttonAction: { /* Navigate to account page */ },
+                        buttonAction: {
+                            // Navigate to account page
+                        },
                         buttonColor: customRed
                     )
                 }.padding(.horizontal)
@@ -29,20 +33,24 @@ struct homeScreen: View {
                 VStack{
                     HStack(spacing: 12.5) {
                         Spacer() // pushes the content towards center
-                        SectionViewSimple(
+                        SectionViewSimple1(
                             title: "Reserve A Room",
                             buttonText: "Reservation Page",
-                            buttonAction: { /* Navigate to reserve room page */ },
+                            buttonAction: {
+                                // Navigate to reserve room page
+                            },
                             buttonColor: customRed
                         )
                         .frame(width: 165, height: 160) // Adjust size to make square
                         
                         Spacer()
                         
-                        SectionViewSimple(
+                        SectionViewSimple2(
                             title: "Request A Book",
                             buttonText: "Request Form",
-                            buttonAction: { /* Navigate to request book page */ },
+                            buttonAction: {
+                                // Navigate to request book page
+                            },
                             buttonColor: customRed
                         )
                         .frame(width: 165, height: 160) // Adjust size to make square
@@ -58,31 +66,11 @@ struct homeScreen: View {
             }
             .background(Color(red: 0.95, green: 0.95, blue: 0.95))
             .navigationBarTitle("EPHS Media Center", displayMode: .large)
-            .navigationBarItems(trailing: menuButton)
+            
         }
-    }
-
-    var menuButton: some View {
-        Menu {
-            Button("Account", action: { /* Navigate to account page */ })
-            Button("Request Book", action: { /* Navigate to request book page */ })
-            Button("Help Center", action: { /* Navigate to help center */ })
-        } label: {
-            HStack {
-                Text("Menu")
-                Image(systemName: "chevron.down")
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal)
-            .foregroundColor(.white)
-            .background(customRed)
-            .cornerRadius(10)
-        }
-        .frame(width: UIScreen.main.bounds.width / 2, alignment: .trailing)
     }
 }
-
-struct SectionView: View {
+struct SectionView1: View {
     let title: String
     let description: String
     let buttonText: String
@@ -97,13 +85,16 @@ struct SectionView: View {
             Text(description)
                 .font(.subheadline)
             Button(action: buttonAction) {
-                Text(buttonText)
-                    .bold()
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(buttonColor)
-                    .cornerRadius(10)
+                NavigationLink(destination: accountView().navigationBarBackButtonHidden(true)
+                ){
+                    Text(buttonText)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(buttonColor)
+                        .cornerRadius(10)
+                }
             }
         }
         .padding()
@@ -113,7 +104,41 @@ struct SectionView: View {
     }
 }
 
-struct SectionViewSimple: View {
+struct SectionView2: View {
+    let title: String
+    let description: String
+    let buttonText: String
+    let buttonAction: () -> Void
+    let buttonColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+                .underline()
+            Text(description)
+                .font(.subheadline)
+            Button(action: buttonAction) {
+                NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)
+                ){
+                    Text(buttonText)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(buttonColor)
+                        .cornerRadius(10)
+                }
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 2)
+    }
+}
+
+struct SectionViewSimple1: View {
     let title: String
     let buttonText: String
     let buttonAction: () -> Void
@@ -125,6 +150,38 @@ struct SectionViewSimple: View {
                 .font(.headline)
                 .underline()
             Button(action: buttonAction) {
+                NavigationLink(destination: reserveRoom().navigationBarBackButtonHidden(true)
+                ){
+                    Text(buttonText)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(buttonColor)
+                        .cornerRadius(10)
+                }
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 2)
+    }
+}
+struct SectionViewSimple2: View {
+    let title: String
+    let buttonText: String
+    let buttonAction: () -> Void
+    let buttonColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+                .underline()
+            Button(action: buttonAction) {                
+                NavigationLink(destination: RequestFormView().navigationBarBackButtonHidden(true)
+            ){
                 Text(buttonText)
                     .bold()
                     .foregroundColor(.white)
@@ -132,6 +189,7 @@ struct SectionViewSimple: View {
                     .frame(maxWidth: .infinity)
                     .background(buttonColor)
                     .cornerRadius(10)
+            }
             }
         }
         .padding()
