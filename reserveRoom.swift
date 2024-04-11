@@ -6,6 +6,11 @@ struct reserveRoom: View {
     @State private var roomStatus = Array(repeating: Array(repeating: "Open", count: 4), count: 4)
     @State private var selectedDate = Date()
     @State private var showingDatePicker = false
+    @State private var navigateToConfirm = false
+    @State private var selectedRoom: Int = 1
+    @State private var selectedPeriod: Int = 1
+    @State private var showAlert = false  // State to control alert visibility
+    
     let maxReservationDays: Int = 7
 
     var lastValidDate: Date {
@@ -19,9 +24,9 @@ struct reserveRoom: View {
                     showingDatePicker.toggle()
                 }) {
                     Text("Select Date: \(selectedDate, style: .date)")
-                        .foregroundColor(.black)  // Changed text color to black for better contrast on grey
+                        .foregroundColor(.black)
                         .padding()
-                        .background(Color(.systemGray5))  // Light grey color
+                        .background(Color(.systemGray5))
                         .cornerRadius(10)
                 }
 
@@ -43,11 +48,24 @@ struct reserveRoom: View {
                     }
                 }
                 .padding(.horizontal)
+
+                NavigationLink(destination: ConfirmReservation(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, onConfirm: {
+                    roomStatus[selectedPeriod-1][selectedRoom-1] = "Reserved"
+                }), isActive: $navigateToConfirm) {
+                    EmptyView()
+                }
                 taskBar()
             }
             .navigationTitle("EPHS Media Center")
             .navigationBarTitleDisplayMode(.inline)
-            .background(Color(.systemGray6))  // General background color for the view
+            .background(Color(.systemGray6))
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("Room Already Reserved"),
+                    message: Text("Please choose a different room or period."),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
 
@@ -57,7 +75,7 @@ struct reserveRoom: View {
                 .font(.headline)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.systemGray5))  // Light grey background for headers
+                .background(Color(.systemGray5))
                 .cornerRadius(10)
 
             ForEach(rooms, id: \.self) { room in
@@ -65,14 +83,20 @@ struct reserveRoom: View {
                     Text("Room \(room): \(roomStatus[period-1][room-1])")
                     Spacer()
                     Button("Reserve") {
-                        reserveRoom(period: period, room: room)
+                        selectedRoom = room
+                        selectedPeriod = period
+                        if roomStatus[period-1][room-1] == "Open" {
+                            navigateToConfirm = true
+                        } else {
+                            showAlert = true
+                        }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(customRed)  // Using custom red color
+                    .tint(customRed)
                 }
                 .padding(.vertical, 4)
                 .padding(.horizontal)
-                .background(Color.white)  // White background for individual room entries
+                .background(Color.white)
                 .cornerRadius(10)
                 .shadow(radius: 2)
             }
@@ -80,17 +104,6 @@ struct reserveRoom: View {
         .padding(.vertical, 5)
     }
 
-    private func reserveRoom(period: Int, room: Int) {
-        let reservationDate = Calendar.current.startOfDay(for: selectedDate)
-        let today = Calendar.current.startOfDay(for: Date())
-        let daysAhead = Calendar.current.dateComponents([.day], from: today, to: reservationDate).day!
-
-        if daysAhead <= maxReservationDays {
-            roomStatus[period-1][room-1] = (roomStatus[period-1][room-1] == "Open") ? "Reserved" : "Open"
-        }
-    }
-
-    // Define the custom red color using provided RGB values
     var customRed: Color {
         Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
     }
