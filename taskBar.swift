@@ -25,9 +25,7 @@ struct taskBar: View {
                     .foregroundColor(.black) // Set foreground color to black
             }
             
-            Button(action: {
-                // Go to book page
-            }) {
+            NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)) {
                 Image(systemName: "books.vertical.fill")
                     .resizable()
                     .frame(width: 30, height: 30)
