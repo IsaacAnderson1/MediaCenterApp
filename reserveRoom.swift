@@ -10,7 +10,7 @@ struct reserveRoom: View {
     @State private var selectedRoom: Int = 1
     @State private var selectedPeriod: Int = 1
     @State private var showAlert = false  // State to control alert visibility
-    
+
     let maxReservationDays: Int = 7
 
     var lastValidDate: Date {
@@ -54,7 +54,6 @@ struct reserveRoom: View {
                 }), isActive: $navigateToConfirm) {
                     EmptyView()
                 }
-                taskBar()
             }
             .navigationTitle("EPHS Media Center")
             .navigationBarTitleDisplayMode(.inline)
@@ -92,11 +91,15 @@ struct reserveRoom: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(customRed)
+                    .tint(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : customRed)
                 }
-                .padding(.vertical, 4)
-                .padding(.horizontal)
+                .padding()
+                .frame(maxWidth: .infinity)
                 .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : customRed, lineWidth: 2)
+                )
                 .cornerRadius(10)
                 .shadow(radius: 2)
             }
