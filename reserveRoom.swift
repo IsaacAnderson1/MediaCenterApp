@@ -95,7 +95,7 @@ struct reserveRoom: View {
                 HStack {
                     Text("Room \(room): \(roomStatus[period-1][room-1])")
                     Spacer()
-                    Button("Reserve") {
+                    Button(roomStatus[period-1][room-1] == "Reserved" ? "Reserved" : "Reserve") {
                         selectedRoom = room
                         selectedPeriod = period
                         if roomStatus[period-1][room-1] == "Open" {
@@ -106,6 +106,7 @@ struct reserveRoom: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : customRed)
+                    .disabled(roomStatus[period-1][room-1] == "Reserved")
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
