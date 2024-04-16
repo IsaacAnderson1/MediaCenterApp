@@ -10,6 +10,7 @@ struct reserveRoom: View {
     @State private var selectedRoom: Int = 1
     @State private var selectedPeriod: Int = 1
     @State private var showAlert = false  // State to control alert visibility
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
 
     let maxReservationDays: Int = 7
 
@@ -57,6 +58,7 @@ struct reserveRoom: View {
             }
             .navigationTitle("EPHS Media Center")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: backButton)
             .background(Color(.systemGray6))
             .alert(isPresented: $showAlert) {
                 Alert(
@@ -65,6 +67,18 @@ struct reserveRoom: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+        }
+    }
+
+    private var backButton: some View {
+        Button(action: {
+            self.presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "arrow.left") // System name for back arrow
+                Text("Back")
+            }
+            .foregroundColor(customRed)
         }
     }
 
