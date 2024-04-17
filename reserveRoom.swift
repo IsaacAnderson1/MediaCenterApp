@@ -58,7 +58,7 @@ struct reserveRoom: View {
                 }
                 .padding(.horizontal)
 
-                NavigationLink(destination: ConfirmReservationView(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, onConfirm: {
+                NavigationLink(destination: ConfirmReservation(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, onConfirm: {
                     confirmReservation(room: selectedRoom, date: selectedDate, period: selectedPeriod)
                 }), isActive: $navigateToConfirm) {
                     EmptyView()
