@@ -30,16 +30,24 @@ struct BookFinderView: View {
                 taskBar()
             }
             .navigationBarTitle(Text("Search Books"), displayMode: .large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        // Clears the search text and dismisses the view
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                    .foregroundColor(Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)) // Custom Red Color for the button
-                }
-            }
+            .navigationBarItems(leading: backButton)
         }
+    }
+
+    private var backButton: some View {
+        Button(action: {
+            presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "arrow.left")  // System image for back arrow
+                Text("Back")
+            }
+            .foregroundColor(customRed)  // Apply the custom red color here
+        }
+    }
+
+    var customRed: Color {
+        Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
     }
 }
 
