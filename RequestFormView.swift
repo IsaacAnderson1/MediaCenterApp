@@ -11,9 +11,13 @@ struct RequestFormView: View {
     @State private var alertTitle = "Submission Status"
     @State private var alertMessage = ""
     
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
+    
+    
     var body: some View {
         NavigationView {
             VStack {
+                
                 ScrollView {
                     VStack(alignment: .center, spacing: 20) {
                         Text("Book Request Form")
@@ -30,7 +34,7 @@ struct RequestFormView: View {
                                     .padding()
                             }
                         }
-
+                        
                         fieldCard {
                             VStack(alignment: .center, spacing: 8) {
                                 Text("Author's Name")
@@ -40,7 +44,7 @@ struct RequestFormView: View {
                                     .padding()
                             }
                         }
-
+                        
                         fieldCard {
                             VStack(alignment: .center, spacing: 8) {
                                 Text("Select Genre")
@@ -74,7 +78,8 @@ struct RequestFormView: View {
                 taskBar() // This adds the task bar at the bottom
             }
             .navigationBarTitle("Submit Form", displayMode: .inline)
-            .navigationBarHidden(true)
+            .navigationBarItems(leading: backButton)
+
             .background(Color(.systemGray5)) // Set the background color to light grey
         }
     }
@@ -82,24 +87,41 @@ struct RequestFormView: View {
     // Helper function to create field cards
     @ViewBuilder
     func fieldCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white)
-                    .shadow(radius: 1, x: 0, y: 2)
-
-                VStack(alignment: .center) {
-                    content()
-                    Divider()
-                        .background(Color.gray)
-                }
-                .padding()
+        ZStack(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.white)
+                .shadow(radius: 1, x: 0, y: 2)
+            
+            VStack(alignment: .center) {
+                content()
+                Divider()
+                    .background(Color.gray)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.horizontal)
+            .padding()
         }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal)
+    }
+    
+    private var backButton: some View {
+        Button(action: {
+            self.presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "arrow.left") // System name for back arrow
+                Text("Back")
+            }
+            .foregroundColor(customRed)
+        }
+    }
+    
+    var customRed: Color {
+        Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
+    }
+    
     
     func submitForm() {
-        guard let url = URL(string: "https://forms.gle/wN8Vyqe9VfSJ8WPv5") else {
+        guard let url = URL(string: "https://docs.google.com/forms/d/e/1FAIpQLScrshTjSY96YBApfVPJOqR7y5w8hH0ymOOVVvP1p-dF8gr_-A/viewform?usp=sf_link") else {
             alertTitle = "Error"
             alertMessage = "Invalid URL. Please check the form URL."
             showingAlert = true
@@ -108,6 +130,7 @@ struct RequestFormView: View {
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         let postData: String = "entry.926706243=\(bookName)&entry.662906640=\(authorName)&entry.1716319514_sentinel=\(selectedGenre)"
         request.httpBody = postData.data(using: .utf8)
         
@@ -119,21 +142,27 @@ struct RequestFormView: View {
                     self.showingAlert = true
                     return
                 }
-                guard let response = response as? HTTPURLResponse,
-                      (200...299).contains(response.statusCode) else {
-                    self.alertTitle = "Error"
-                    self.alertMessage = "Server error. Please try again later."
+                if let httpResponse = response as? HTTPURLResponse {
+                    switch httpResponse.statusCode {
+                    case 200...299:
+                        self.alertTitle = "Success"
+                        self.alertMessage = "Form submitted successfully!"
+                    case 400...499:
+                        self.alertTitle = "Request Error"
+                        self.alertMessage = "Bad request or the request was not accepted by the server."
+                    case 500...599:
+                        self.alertTitle = "Server Error"
+                        self.alertMessage = "Server error. Please try again later."
+                    default:
+                        self.alertTitle = "Error"
+                        self.alertMessage = "An unexpected error occurred."
+                    }
                     self.showingAlert = true
-                    return
                 }
-                self.alertTitle = "Success"
-                self.alertMessage = "Form submitted successfully!"
-                self.showingAlert = true
             }
         }.resume()
     }
 }
-
 
 struct RequestFormView_Previews: PreviewProvider {
     static var previews: some View {
