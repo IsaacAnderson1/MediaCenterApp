@@ -1,6 +1,9 @@
 import SwiftUI
+import FirebaseFirestore
 
 struct reserveRoom: View {
+    private var db = Firestore.firestore()
+
     let periods = 1...4
     let rooms = 1...4
     @State private var roomStatus = Array(repeating: Array(repeating: "Open", count: 4), count: 4)
@@ -9,22 +12,24 @@ struct reserveRoom: View {
     @State private var navigateToConfirm = false
     @State private var selectedRoom: Int = 1
     @State private var selectedPeriod: Int = 1
-    @State private var showAlert = false  // State to control alert visibility
+    @State private var showAlert = false
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
 
-    let maxReservationDays: Int = 7
+    let maxReservationDays: Int = 365  // Setting up to a year ahead for reservation
 
-    var lastValidDate: Date {
-        Calendar.current.date(byAdding: .day, value: maxReservationDays, to: Date()) ?? Date()
+    var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-d-yyyy"  // Adjusted to match the document ID format
+        return formatter
     }
 
     var body: some View {
         NavigationView {
             VStack {
                 Button(action: {
-                    showingDatePicker.toggle()
+                    self.showingDatePicker.toggle()
                 }) {
-                    Text("Select Date: \(selectedDate, style: .date)")
+                    Text("Select Date: \(selectedDate, formatter: dateFormatter)")
                         .foregroundColor(.black)
                         .padding()
                         .background(Color(.systemGray5))
@@ -35,12 +40,15 @@ struct reserveRoom: View {
                     DatePicker(
                         "Select Date",
                         selection: $selectedDate,
-                        in: Date()...lastValidDate,
+                        in: Date()...Calendar.current.date(byAdding: .day, value: maxReservationDays, to: Date())!,
                         displayedComponents: .date
                     )
                     .datePickerStyle(WheelDatePickerStyle())
                     .padding()
                     .transition(.slide)
+                    .onChange(of: selectedDate) { newDate in
+                        fetchRoomStatuses(date: newDate)
+                    }
                 }
 
                 ScrollView {
@@ -50,13 +58,13 @@ struct reserveRoom: View {
                 }
                 .padding(.horizontal)
 
-                NavigationLink(destination: ConfirmReservation(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, onConfirm: {
-                    roomStatus[selectedPeriod-1][selectedRoom-1] = "Reserved"
+                NavigationLink(destination: ConfirmReservationView(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, onConfirm: {
+                    confirmReservation(room: selectedRoom, date: selectedDate, period: selectedPeriod)
                 }), isActive: $navigateToConfirm) {
                     EmptyView()
                 }
             }
-            .navigationTitle("EPHS Media Center")
+            .navigationTitle("Reservation System")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: backButton)
             .background(Color(.systemGray6))
@@ -67,6 +75,9 @@ struct reserveRoom: View {
                     dismissButton: .default(Text("OK"))
                 )
             }
+            .onAppear {
+//                initializeDateRangeDocuments() //only uncomment when refresh db
+            }
         }
     }
 
@@ -75,10 +86,10 @@ struct reserveRoom: View {
             self.presentationMode.wrappedValue.dismiss()
         }) {
             HStack {
-                Image(systemName: "arrow.left") // System name for back arrow
+                Image(systemName: "arrow.left")
                 Text("Back")
             }
-            .foregroundColor(customRed)
+            .foregroundColor(.red)
         }
     }
 
@@ -105,7 +116,7 @@ struct reserveRoom: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : customRed)
+                    .tint(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : Color.red)
                     .disabled(roomStatus[period-1][room-1] == "Reserved")
                 }
                 .padding()
@@ -113,7 +124,7 @@ struct reserveRoom: View {
                 .background(Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : customRed, lineWidth: 2)
+                        .stroke(roomStatus[period-1][room-1] == "Reserved" ? Color.gray : Color.red, lineWidth: 2)
                 )
                 .cornerRadius(10)
                 .shadow(radius: 2)
@@ -122,8 +133,109 @@ struct reserveRoom: View {
         .padding(.vertical, 5)
     }
 
-    var customRed: Color {
-        Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
+    func fetchRoomStatuses(date: Date) {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("reservations").document(dateString)
+        docRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                for room in 1...4 {
+                    if let periodsData = document.data()?["room\(room)"] as? [String: String] {
+                        for period in 1...4 {
+                            let status = periodsData["period\(period)"] ?? "Open"
+                            roomStatus[period-1][room-1] = status
+                        }
+                    }
+                }
+            } else {
+                print("Document does not exist for date: \(dateString), initializing new document.")
+                initializeSingleDocument(date: dateString)
+            }
+        }
+    }
+
+    func confirmReservation(room: Int, date: Date, period: Int) {
+        let dateString = dateFormatter.string(from: date)
+        let roomField = "room\(room)"
+        let periodField = "period\(period)"
+        let docRef = db.collection("reservations").document(dateString)
+
+        docRef.setData([roomField: [periodField: "Reserved"]], mergeFields: [roomField + "." + periodField]) { err in
+            if let err = err {
+                print("Error updating document: \(err)")
+            } else {
+                print("Document successfully updated")
+                fetchRoomStatuses(date: date)  // Refresh data after update
+            }
+        }
+    }
+
+    func initializeDateRangeDocuments() {
+        let startDate = Date()
+        let endDate = Calendar.current.date(byAdding: .year, value: 1, to: startDate)!
+        var currentDate = startDate
+        
+        while currentDate <= endDate {
+            let dateString = dateFormatter.string(from: currentDate)
+            let docRef = db.collection("reservations").document(dateString)
+            
+            var roomData: [String: Any] = [:]
+            for room in 1...4 {
+                var periodsData: [String: String] = [:]
+                for period in 1...4 {
+                    periodsData["period\(period)"] = "Open"
+                }
+                roomData["room\(room)"] = periodsData
+            }
+            
+            // This sets the rooms map correctly
+            docRef.setData(roomData, merge: true) { err in
+                if let err = err {
+                    print("Error initializing document for date \(dateString): \(err)")
+                } else {
+                    print("Document initialized for date: \(dateString)")
+                }
+            }
+            
+            currentDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)!
+        }
+    }
+
+    func initializeSingleDocument(date: String) {
+        let docRef = db.collection("reservations").document(date)
+        var initialData = [String: Any]()
+
+        for room in 1...4 {
+            var periodsData = [String: String]()
+            for period in 1...4 {
+                periodsData["period\(period)"] = "Open"
+            }
+            initialData["room\(room)"] = periodsData
+        }
+
+        docRef.setData(["rooms": initialData], merge: true) { err in
+            if let err = err {
+                print("Error initializing document for date \(date): \(err)")
+            } else {
+                print("Document initialized for date: \(date)")
+            }
+        }
+    }
+}
+
+struct ConfirmReservationView: View {
+    var roomNumber: Int
+    var date: Date
+    var period: Int
+    var onConfirm: () -> Void
+
+    var body: some View {
+        VStack {
+            Text("Confirm Reservation")
+            Text("Room \(roomNumber), Period \(period) on \(date, formatter: DateFormatter())")
+            Button("Confirm") {
+                onConfirm()
+            }
+        }
     }
 }
 
