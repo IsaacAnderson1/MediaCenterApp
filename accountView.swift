@@ -58,11 +58,15 @@ struct accountView: View {
     
     func bookEntry(_ book: (String, String, String)) -> some View {
         HStack {
-            Image(book.2)
+            Image(book.2)  // Assume book.2 is the image name
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 50, height: 70)
                 .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.black, lineWidth: 2)  // Changed border to black
+                )
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(book.0)
@@ -111,7 +115,8 @@ struct accountView: View {
     var menuButton: some View {
         Menu(content: {
             Button("Profile", action: {})
-            Button("Logout", action: {})
+            Button("Contact", action: {})  // Added contact option
+            Button("Logout", action: {})   // Added logout option
         }, label: {
             HStack {
                 Text("Menu")
