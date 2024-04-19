@@ -1,252 +1,274 @@
 import SwiftUI
-import Firebase
+import FirebaseAuth
+import FirebaseFirestore
 
-struct accountView: View {
-    // Example data for books - this would typically be fetched from a database or API
-    let reservedBooks = [
-        ("Book One", "May 1", "book_one_cover"),
-        ("Book Two", "May 5", "book_two_cover"),
-        ("Book Three", "May 10", "book_three_cover")
-    ]
-    @State private var reservedRooms: [String] = [] // State to hold room data
+struct reserveRoom: View {
+    
+    private var db = Firestore.firestore()
+    
+    let periods = 1...4
+    let rooms = 1...4
+    @State private var userid: String = ""
+    @State private var roomStatus = Array(repeating: Array(repeating: ReservationStatus(status: "Open", userID: ""), count: 4), count: 4) // Updated to include userID
+    @State private var selectedDate = Date()
+    @State private var showingDatePicker = false
+    @State private var navigateToConfirm = false
+    @State private var selectedRoom: Int = 1
+    @State private var selectedPeriod: Int = 1
+    @State private var showAlert = false
+    
+    @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
+    
+    let maxReservationDays: Int = 365  // Setting up to a year ahead for reservation
+    
+    var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM-d-yyyy"  // Adjusted to match the document ID format
+        return formatter
+    }
     
     var body: some View {
         NavigationView {
-            ZStack {
-                Color(.sRGB, red: 245/255, green: 245/255, blue: 245/255, opacity: 1.0)
-                    .ignoresSafeArea()
+            VStack {
+                Button(action: {
+                    self.showingDatePicker.toggle()
+                }) {
+                    Text("Select Date: \(selectedDate, formatter: dateFormatter)")
+                        .foregroundColor(.black)
+                        .padding()
+                        .background(Color(.systemGray5))
+                        .cornerRadius(10)
+                }
                 
-                VStack(alignment: .center, spacing: 10) {
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 15) {
-                            bookSection
-                            roomSection
-                        }
-                        .padding(.horizontal)
+                if showingDatePicker {
+                    DatePicker(
+                        "Select Date",
+                        selection: $selectedDate,
+                        in: Date()...Calendar.current.date(byAdding: .day, value: maxReservationDays, to: Date())!,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(WheelDatePickerStyle())
+                    .padding()
+                    .transition(.slide)
+                    .onChange(of: selectedDate) { newDate in
+                        fetchRoomStatuses(date: newDate)
                     }
-                    Spacer()
-                    taskBar()
+                }
+                
+                ScrollView {
+                    ForEach(periods, id: \.self) { period in
+                        periodView(for: period)
+                    }
+                }
+                .padding(.horizontal)
+                
+                NavigationLink(destination: ConfirmReservation(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, userid: userid, onConfirm: {
+                    confirmReservation(room: selectedRoom, date: selectedDate, period: selectedPeriod)
+                }), isActive: $navigateToConfirm) {
+                    EmptyView()
                 }
             }
-            .navigationBarTitle("EPHS Media Center", displayMode: .large)
-            .navigationBarItems(trailing: menuButton)
-            .onAppear(perform: loadReservedRooms)
+            .navigationTitle("Reservation System")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(leading: backButton)
+            .background(Color(.systemGray6))
+            .alert(isPresented: $showAlert) {
+                Alert(
+                    title: Text("Room Already Reserved"),
+                    message: Text("Please choose a different room or period."),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
+            .onAppear {
+                fetchRoomStatuses(date: selectedDate)
+                //            initializeDateRangeDocuments() //only uncomment when refresh db
+                if let currentUserID = getCurrentUserID() {
+                    userid = currentUserID
+                }
+            }
         }
     }
     
-    var bookSection: some View {
-        VStack {
-            Text("Your Books:")
+    private var backButton: some View {
+        Button(action: {
+            self.presentationMode.wrappedValue.dismiss()
+        }) {
+            HStack {
+                Image(systemName: "arrow.left")
+                Text("Back")
+            }
+            .foregroundColor(.red)
+        }
+    }
+    
+    private func periodView(for period: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Period \(period)")
                 .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(Color.white)
-                .padding(10)
-                .frame(maxWidth: .infinity)
-                .background(customRed) // Using custom red color
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemGray5))
                 .cornerRadius(10)
             
-            VStack(spacing: 10) { // Space between books
-                ForEach(reservedBooks, id: \.0) { book in
-                    bookEntry(book)
+            ForEach(rooms, id: \.self) { room in
+                HStack {
+                    Text("Room \(room): \(roomStatus[period-1][room-1].status)")
+                    Spacer()
+                    Button(action: {
+                        selectedRoom = room
+                        selectedPeriod = period
+                        if roomStatus[period-1][room-1].status == "Open" {
+                            navigateToConfirm = true
+                        } else {
+                            showAlert = true
+                        }
+                    }) {
+                        Text(roomStatus[period-1][room-1].status == "Reserved" ? "Reserved" : "Reserve")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(roomStatus[period-1][room-1].status == "Reserved" ? Color.gray : Color.red)
+                    .disabled(roomStatus[period-1][room-1].status == "Reserved" || roomStatus[period-1][room-1].isConfirmed) // Grey out button when reserved or confirmed
                 }
-            }
-            .background(Color.white) // White background for the book list
-            .cornerRadius(10)
-        }
-        .background(Color.white) // Consistent section background
-        .cornerRadius(12)
-        .shadow(radius: 5)
-    }
-    
-    func bookEntry(_ book: (String, String, String)) -> some View {
-        HStack {
-            Image(book.2)  // Assume book.2 is the image name
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 70)
-                .cornerRadius(8)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.black, lineWidth: 2)  // Black border for contrast
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(roomStatus[period-1][room-1].status == "Reserved" ? Color.gray : Color.red, lineWidth: 2)
                 )
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(book.0)
-                    .fontWeight(.medium)
-                Text("Due: \(book.1)")
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
+                .cornerRadius(10)
+                .shadow(radius: 2)
             }
-            Spacer()
         }
-        .padding()
-        .background(Color.white) // White card background
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .padding(.vertical, 5)
     }
     
-    var roomSection: some View {
-        Section(header: Text("Rooms Reserved:")
-            .font(.headline)
-            .bold()
-            .foregroundColor(Color.white)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(customRed)
-            .cornerRadius(12)) {
-                if reservedRooms.isEmpty {
-                    Text("You have no rooms currently reserved.")
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .background(Color.white)
-                        .cornerRadius(12)
-                } else {
-                    ForEach(reservedRooms, id: \.self) { reservation in
-                        HStack {
-                            Text(reservation)
-                                .padding()
-                            Spacer()
-                            Button(action: {
-                                cancelReservation(reservation: reservation)
-                            }) {
-                                Text("Cancel")
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .background(customRed)
-                                    .cornerRadius(8)
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white)
-                        .cornerRadius(12)
-                        .shadow(radius: 2)
-                    }
-                }
-            }
-            .background(customRed)
-            .cornerRadius(12)
-    }
-    
-    
-    var menuButton: some View {
-        Menu(content: {
-            Button("Profile", action: {})
-            Button("Contact", action: {})  // Added contact option
-            Button("Logout", action: {})   // Added logout option
-        }, label: {
-            HStack {
-                Text("Menu")
-                Image(systemName: "chevron.down")
-            }
-            .padding(8)
-            .background(customRed) // Using custom red color
-            .foregroundColor(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-        })
-    }
-    
-    var customRed: Color {
-        Color(.sRGB, red: 194/255, green: 49/255, blue: 44/255, opacity: 1)
-    }
-    
-    // Function to fetch reserved rooms from Firebase
-    // Function to fetch reserved rooms from Firebase
-    func loadReservedRooms() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("Debug: No user is currently logged in.")
-            return
-        }
-        print("Debug: Fetching reservations for user ID: \(userId)")
-        
-        let db = Firestore.firestore()
-        db.collection("reservations") // Assuming 'reservations' is keyed by dates
-            .getDocuments { (snapshot, error) in
-                if let error = error {
-                    print("Error getting documents: \(error.localizedDescription)")
-                    return
-                }
-                
-                var userReservations: [String] = []
-                snapshot?.documents.forEach { document in
-                    let date = document.documentID
-                    let data = document.data()
-                    
-                    // Iterate through each room in the document
-                    for (roomKey, roomValue) in data {
-                        guard let roomDetails = roomValue as? [String: Any] else { continue }
-                        
-                        // Iterate through each period in the room
-                        for (periodKey, periodValue) in roomDetails {
-                            guard let periodDetails = periodValue as? [String: Any],
-                                  let status = periodDetails["status"] as? String,
-                                  let reservedUserID = periodDetails["userID"] as? String,
-                                  status == "Reserved" && reservedUserID == userId else {
-                                continue
-                            }
-                            userReservations.append("\(date) -  \(roomKey),  \(periodKey)")
+    func fetchRoomStatuses(date: Date) {
+        let dateString = dateFormatter.string(from: date)
+        let docRef = db.collection("reservations").document(dateString)
+        docRef.getDocument { (document, error) in
+            if let document = document, document.exists {
+                for room in 1...4 {
+                    if let periodsData = document.data()?["room\(room)"] as? [String: [String: String]] {
+                        for period in 1...4 {
+                            let status = periodsData["period\(period)"]?["status"] ?? "Open"
+                            let userID = periodsData["period\(period)"]?["userID"] ?? ""
+                            roomStatus[period-1][room-1] = ReservationStatus(status: status, userID: userID)
                         }
                     }
                 }
-                
-                DispatchQueue.main.async {
-                    self.reservedRooms = userReservations
-                    if userReservations.isEmpty {
-                        print("Debug: No reserved rooms found after processing documents.")
-                    }
-                }
-            }
-    }
-    
-    func cancelReservation(reservation: String) {
-       // print("Attempting to cancel reservation with string: \(reservation)")
-        // Split the reservation string to extract the date, room, and period
-        let reservationComponents = reservation.components(separatedBy: " - ")
-        guard reservationComponents.count == 2,
-              let dateComponent = reservationComponents.first,
-              let roomPeriodComponent = reservationComponents.last?.components(separatedBy: ", "),
-              roomPeriodComponent.count == 2 else {
-            print("Error: Reservation string format is incorrect.")
-            return
-        }
-        
-        let date = dateComponent.trimmingCharacters(in: .whitespacesAndNewlines)
-        let roomWithPrefix = roomPeriodComponent[0]
-        let periodWithPrefix = roomPeriodComponent[1]
-        
-        guard let room = roomWithPrefix.split(separator: ":").map(String.init).last?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let period = periodWithPrefix.split(separator: ":").map(String.init).last?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-            print("Error: Could not extract room or period from reservation string.")
-            return
-        }
-        
-        // Construct the path to the specific period's status and userID
-        let statusPath = "\(room).\(period).status"
-        let userIDPath = "\(room).\(period).userID"
-        
-        // Get a reference to the Firestore database
-        let db = Firestore.firestore()
-        
-        // Create a reference to the specific document using the extracted date
-        let documentReference = db.collection("reservations").document(date)
-        
-        // Update the status and userID to "Open" and an empty string, respectively
-        documentReference.updateData([
-            statusPath: "Open",
-            userIDPath: ""
-        ]) { error in
-            if let error = error {
-                print("Error updating document: \(error.localizedDescription)")
             } else {
-                print("Reservation cancelled successfully.")
-                // Optionally, refresh the reservation list if needed
-                 self.loadReservedRooms()
+                print("Document does not exist for date: \(dateString), initializing new document.")
+                initializeSingleDocument(date: dateString)
+            }
+        }
+    }
+    
+    func confirmReservation(room: Int, date: Date, period: Int) {
+        let dateString = dateFormatter.string(from: date)
+        let roomField = "room\(room)"
+        let periodField = "period\(period)"
+        let docRef = db.collection("reservations").document(dateString)
+        
+        docRef.setData([roomField: [periodField: ["status": "Reserved", "userID": userid]]], mergeFields: [roomField + "." + periodField]) { err in
+            if let err = err {
+                print("Error updating document: \(err)")
+            } else {
+                print("Document successfully updated")
+                fetchRoomStatuses(date: date)  // Refresh data after update
+            }
+        }
+    }
+    
+    func initializeDateRangeDocuments() {
+        let startDate = Date()
+        let endDate = Calendar.current.date(byAdding: .year, value: 1, to: startDate)!
+        var currentDate = startDate
+        
+        while currentDate <= endDate {
+            let dateString = dateFormatter.string(from: currentDate)
+            let docRef = db.collection("reservations").document(dateString)
+            
+            var roomData: [String: Any] = [:]
+            for room in 1...4 {
+                var periodsData: [String: [String: String]] = [:] // Changed to hold user ID
+                for period in 1...4 {
+                    periodsData["period\(period)"] = ["status": "Open", "userID": ""] // Include user ID with an empty string initially
+                }
+                roomData["room\(room)"] = periodsData
+            }
+            
+            // This sets the rooms map correctly
+            docRef.setData(roomData, merge: true) { err in
+                if let err = err {
+                    print("Error initializing document for date \(dateString): \(err)")
+                } else {
+                    print("Document initialized for date: \(dateString)")
+                }
+            }
+            
+            currentDate = Calendar.current.date(byAdding: .day, value: 1, to: currentDate)!
+        }
+    }
+    
+    func initializeSingleDocument(date: String) {
+        let docRef = db.collection("reservations").document(date)
+        var initialData = [String: Any]()
+        
+        for room in 1...4 {
+            var periodsData: [String: [String: String]] = [:] // Changed to hold user ID
+            for period in 1...4 {
+                periodsData["period\(period)"] = ["status": "Open", "userID": ""] // Include user ID with an empty string initially
+            }
+            initialData["room\(room)"] = periodsData
+        }
+        
+        docRef.setData(["rooms": initialData], merge: true) { err in
+            if let err = err {
+                print("Error initializing document for date \(date): \(err)")
+            } else {
+                print("Document initialized for date: \(date)")
+            }
+        }
+    }
+    
+    func getCurrentUserID() -> String? {
+        if let user = Auth.auth().currentUser {
+            let userID = user.uid
+            return userID
+        } else {
+            // User is not authenticated or user data is not available
+            return nil
+        }
+    }
+}
+
+struct ConfirmReservationView: View {
+    var roomNumber: Int
+    var date: Date
+    var period: Int
+    var userid: String
+    var onConfirm: () -> Void
+
+    var body: some View {
+        VStack {
+            Text("Confirm Reservation")
+            Text("Room \(roomNumber), Period \(period) on \(date, formatter: DateFormatter())")
+            Button("Confirm") {
+                onConfirm()
             }
         }
     }
 }
-struct AccountView_Previews: PreviewProvider {
+
+struct reserveRoom_Previews: PreviewProvider {
     static var previews: some View {
-        accountView()
+        reserveRoom()
     }
+}
+
+struct ReservationStatus {
+    var status: String
+    var userID: String
+    var isConfirmed: Bool = false // Added to track confirmation status for each period
 }
