@@ -157,10 +157,22 @@ struct accountView: View {
             print("Debug: No user is currently logged in.")
             return
         }
-        print("Debug: Fetching reservations for user ID: \(userId)")
         
         let db = Firestore.firestore()
-        db.collection("reservations") // Assuming 'reservations' is keyed by dates
+        
+        // Calculate the date range
+        let today = Date()
+        let sevenDaysLater = Calendar.current.date(byAdding: .day, value: 7, to: today)!
+        
+        // Format dates to match the Firestore document IDs
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM-dd-yyyy"
+        let todayStr = dateFormatter.string(from: today)
+        let sevenDaysLaterStr = dateFormatter.string(from: sevenDaysLater)
+        
+        db.collection("reservations")
+            .whereField(FieldPath.documentID(), isGreaterThanOrEqualTo: todayStr)
+            .whereField(FieldPath.documentID(), isLessThanOrEqualTo: sevenDaysLaterStr)
             .getDocuments { (snapshot, error) in
                 if let error = error {
                     print("Error getting documents: \(error.localizedDescription)")
@@ -182,9 +194,9 @@ struct accountView: View {
                                   let status = periodDetails["status"] as? String,
                                   let reservedUserID = periodDetails["userID"] as? String,
                                   status == "Reserved" && reservedUserID == userId else {
-                                continue
-                            }
-                            userReservations.append("\(date) -  \(roomKey),  \(periodKey)")
+                                    continue
+                                }
+                            userReservations.append("\(date) - \(roomKey), \(periodKey)")
                         }
                     }
                 }
@@ -192,11 +204,12 @@ struct accountView: View {
                 DispatchQueue.main.async {
                     self.reservedRooms = userReservations
                     if userReservations.isEmpty {
-                        print("Debug: No reserved rooms found after processing documents.")
+                        print("Debug: No reserved rooms found within 7 days.")
                     }
                 }
             }
     }
+
     
     func cancelReservation(reservation: String) {
        // print("Attempting to cancel reservation with string: \(reservation)")
