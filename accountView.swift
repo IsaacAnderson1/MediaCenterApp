@@ -1,18 +1,19 @@
 import SwiftUI
+import Firebase
 
 struct accountView: View {
-    // Example data - this would typically be fetched from a database or API
+    // Example data for books - this would typically be fetched from a database or API
     let reservedBooks = [
         ("Book One", "May 1", "book_one_cover"),
         ("Book Two", "May 5", "book_two_cover"),
         ("Book Three", "May 10", "book_three_cover")
     ]
-    let reservedRooms: [String] = [] // No rooms reserved
-
+    @State private var reservedRooms: [String] = [] // State to hold room data
+    
     var body: some View {
         NavigationView {
             ZStack {
-                Color(.sRGB, red: 245/255, green: 245/255, blue: 245/255, opacity: 1.0) // Light gray background
+                Color(.sRGB, red: 245/255, green: 245/255, blue: 245/255, opacity: 1.0)
                     .ignoresSafeArea()
                 
                 VStack(alignment: .center, spacing: 10) {
@@ -29,6 +30,7 @@ struct accountView: View {
             }
             .navigationBarTitle("EPHS Media Center", displayMode: .large)
             .navigationBarItems(trailing: menuButton)
+            .onAppear(perform: loadReservedRooms)
         }
     }
     
@@ -65,7 +67,7 @@ struct accountView: View {
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.black, lineWidth: 2)  // Changed border to black
+                        .stroke(Color.black, lineWidth: 2)  // Black border for contrast
                 )
             
             VStack(alignment: .leading, spacing: 2) {
@@ -85,32 +87,47 @@ struct accountView: View {
     
     var roomSection: some View {
         Section(header: Text("Rooms Reserved:")
-                    .font(.headline)
-                    .bold()
-                    .foregroundColor(Color.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(customRed) // Using custom red color
-                    .cornerRadius(12)) {
-            if reservedRooms.isEmpty {
-                Text("You have no rooms currently reserved.")
-                    .padding()
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .background(Color.white)
-                    .cornerRadius(12)
-            } else {
-                ForEach(reservedRooms, id: \.self) { room in
-                    Text(room)
+            .font(.headline)
+            .bold()
+            .foregroundColor(Color.white)
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(customRed)
+            .cornerRadius(12)) {
+                if reservedRooms.isEmpty {
+                    Text("You have no rooms currently reserved.")
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .center)
                         .background(Color.white)
                         .cornerRadius(12)
+                } else {
+                    ForEach(reservedRooms, id: \.self) { reservation in
+                        HStack {
+                            Text(reservation)
+                                .padding()
+                            Spacer()
+                            Button(action: {
+                                cancelReservation(reservation: reservation)
+                            }) {
+                                Text("Cancel")
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(customRed)
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        .shadow(radius: 2)
+                    }
                 }
             }
-        }
-        .background(customRed) // Matching background for consistency
-        .cornerRadius(12)
+            .background(customRed)
+            .cornerRadius(12)
     }
+    
     
     var menuButton: some View {
         Menu(content: {
@@ -129,12 +146,105 @@ struct accountView: View {
         })
     }
     
-    // Define the custom red color
     var customRed: Color {
         Color(.sRGB, red: 194/255, green: 49/255, blue: 44/255, opacity: 1)
     }
+    
+    // Function to fetch reserved rooms from Firebase
+    // Function to fetch reserved rooms from Firebase
+    func loadReservedRooms() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("Debug: No user is currently logged in.")
+            return
+        }
+        print("Debug: Fetching reservations for user ID: \(userId)")
+        
+        let db = Firestore.firestore()
+        db.collection("reservations") // Assuming 'reservations' is keyed by dates
+            .getDocuments { (snapshot, error) in
+                if let error = error {
+                    print("Error getting documents: \(error.localizedDescription)")
+                    return
+                }
+                
+                var userReservations: [String] = []
+                snapshot?.documents.forEach { document in
+                    let date = document.documentID
+                    let data = document.data()
+                    
+                    // Iterate through each room in the document
+                    for (roomKey, roomValue) in data {
+                        guard let roomDetails = roomValue as? [String: Any] else { continue }
+                        
+                        // Iterate through each period in the room
+                        for (periodKey, periodValue) in roomDetails {
+                            guard let periodDetails = periodValue as? [String: Any],
+                                  let status = periodDetails["status"] as? String,
+                                  let reservedUserID = periodDetails["userID"] as? String,
+                                  status == "Reserved" && reservedUserID == userId else {
+                                continue
+                            }
+                            userReservations.append("\(date) -  \(roomKey),  \(periodKey)")
+                        }
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.reservedRooms = userReservations
+                    if userReservations.isEmpty {
+                        print("Debug: No reserved rooms found after processing documents.")
+                    }
+                }
+            }
+    }
+    
+    func cancelReservation(reservation: String) {
+       // print("Attempting to cancel reservation with string: \(reservation)")
+        // Split the reservation string to extract the date, room, and period
+        let reservationComponents = reservation.components(separatedBy: " - ")
+        guard reservationComponents.count == 2,
+              let dateComponent = reservationComponents.first,
+              let roomPeriodComponent = reservationComponents.last?.components(separatedBy: ", "),
+              roomPeriodComponent.count == 2 else {
+            print("Error: Reservation string format is incorrect.")
+            return
+        }
+        
+        let date = dateComponent.trimmingCharacters(in: .whitespacesAndNewlines)
+        let roomWithPrefix = roomPeriodComponent[0]
+        let periodWithPrefix = roomPeriodComponent[1]
+        
+        guard let room = roomWithPrefix.split(separator: ":").map(String.init).last?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let period = periodWithPrefix.split(separator: ":").map(String.init).last?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            print("Error: Could not extract room or period from reservation string.")
+            return
+        }
+        
+        // Construct the path to the specific period's status and userID
+        let statusPath = "\(room).\(period).status"
+        let userIDPath = "\(room).\(period).userID"
+        
+        // Get a reference to the Firestore database
+        let db = Firestore.firestore()
+        
+        // Create a reference to the specific document using the extracted date
+        let documentReference = db.collection("reservations").document(date)
+        
+        // Update the status and userID to "Open" and an empty string, respectively
+        documentReference.updateData([
+            statusPath: "Open",
+            userIDPath: ""
+        ]) { error in
+            if let error = error {
+                print("Error updating document: \(error.localizedDescription)")
+            } else {
+                print("Reservation cancelled successfully.")
+                // Optionally, refresh the reservation list if needed
+                 self.loadReservedRooms()
+            }
+        }
+    }
 }
-
 struct AccountView_Previews: PreviewProvider {
     static var previews: some View {
         accountView()
