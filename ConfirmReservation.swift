@@ -4,6 +4,7 @@ struct ConfirmReservation: View {
     var roomNumber: Int
     var date: Date
     var period: Int
+    var userid: String
     var onConfirm: () -> Void  // Closure to execute on confirmation
     
     @Environment(\.presentationMode) var presentationMode
@@ -58,4 +59,3 @@ struct ConfirmReservation: View {
         }
     }
 }
-
