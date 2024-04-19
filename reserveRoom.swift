@@ -19,7 +19,7 @@ struct reserveRoom: View {
     
     @Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     
-    let maxReservationDays: Int = 365  // Setting up to a year ahead for reservation
+    let maxReservationDays: Int = 7  // Setting up to a year ahead for reservation
     
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
