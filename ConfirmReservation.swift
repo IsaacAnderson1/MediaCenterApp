@@ -6,7 +6,8 @@ struct ConfirmReservation: View {
     var period: Int
     var userid: String
     var onConfirm: () -> Void  // Closure to execute on confirmation
-    
+    let customRed = Color(red: 194 / 255, green: 49 / 255, blue: 44 / 255)
+
     @Environment(\.presentationMode) var presentationMode
 
     private var dateFormatter: DateFormatter {
@@ -38,7 +39,7 @@ struct ConfirmReservation: View {
                     }
                     .padding()
                     .frame(minWidth: 100, maxWidth: .infinity)
-                    .background(Color.green)
+                    .background(customRed)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     
@@ -47,7 +48,7 @@ struct ConfirmReservation: View {
                     }
                     .padding()
                     .frame(minWidth: 100, maxWidth: .infinity)
-                    .background(Color.red)
+                    .background(Color.gray)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }
