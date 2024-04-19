@@ -7,9 +7,9 @@ struct reserveRoom: View {
     private var db = Firestore.firestore()
     
     let periods = 1...4
-    let rooms = 1...4
+    let rooms = 1...3
     @State private var userid: String = ""
-    @State private var roomStatus = Array(repeating: Array(repeating: ReservationStatus(status: "Open", userID: ""), count: 4), count: 4) // Updated to include userID
+    @State private var roomStatus = Array(repeating: Array(repeating: ReservationStatus(status: "Open", userID: ""), count: 3), count: 4) // Updated to include userID
     @State private var selectedDate = Date()
     @State private var showingDatePicker = false
     @State private var navigateToConfirm = false
@@ -81,7 +81,7 @@ struct reserveRoom: View {
             }
             .onAppear {
                 fetchRoomStatuses(date: selectedDate)
-                //            initializeDateRangeDocuments() //only uncomment when refresh db
+                           // initializeDateRangeDocuments() //only uncomment when refresh db
                 if let currentUserID = getCurrentUserID() {
                     userid = currentUserID
                 }
@@ -148,7 +148,7 @@ struct reserveRoom: View {
         let docRef = db.collection("reservations").document(dateString)
         docRef.getDocument { (document, error) in
             if let document = document, document.exists {
-                for room in 1...4 {
+                for room in 1...3 {
                     if let periodsData = document.data()?["room\(room)"] as? [String: [String: String]] {
                         for period in 1...4 {
                             let status = periodsData["period\(period)"]?["status"] ?? "Open"
@@ -190,7 +190,7 @@ struct reserveRoom: View {
             let docRef = db.collection("reservations").document(dateString)
             
             var roomData: [String: Any] = [:]
-            for room in 1...4 {
+            for room in 1...3 {
                 var periodsData: [String: [String: String]] = [:] // Changed to hold user ID
                 for period in 1...4 {
                     periodsData["period\(period)"] = ["status": "Open", "userID": ""] // Include user ID with an empty string initially
@@ -215,7 +215,7 @@ struct reserveRoom: View {
         let docRef = db.collection("reservations").document(date)
         var initialData = [String: Any]()
         
-        for room in 1...4 {
+        for room in 1...3 {
             var periodsData: [String: [String: String]] = [:] // Changed to hold user ID
             for period in 1...4 {
                 periodsData["period\(period)"] = ["status": "Open", "userID": ""] // Include user ID with an empty string initially
