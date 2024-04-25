@@ -30,6 +30,21 @@ struct homeScreen: View {
                 }.padding(.horizontal)
                     .frame(maxWidth: .infinity) // Ensures VStack takes full available width
 
+                
+                SectionView3(
+                    title: "Printing Instructions",
+                    buttonText: "Printer Page",
+                    buttonAction: {
+                        // Navigate to request book page
+                    },
+                    buttonColor: customRed
+                )
+                .padding(.horizontal)
+                    .frame(maxWidth: .infinity)
+                
+                Spacer()
+                
+                
                 VStack{
                     HStack(spacing: 12.5) {
                         Spacer() // pushes the content towards center
@@ -55,8 +70,8 @@ struct homeScreen: View {
                         )
                         .frame(width: 165, height: 160) // Adjust size to make square
                         Spacer() // pushes the content towards center
+                        
                     }
-                
                 }
                 .padding(.horizontal)
                 .frame(maxWidth: .infinity) // Ensures VStack takes full available width
@@ -65,7 +80,8 @@ struct homeScreen: View {
                 taskBar()
             }
             .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-            .navigationBarTitle("EPHS Media Center", displayMode: .large)
+            .navigationBarTitle("EPHS Media Center", displayMode: .large).position(x: 200, y:350)
+            
             
         }
     }
@@ -190,6 +206,37 @@ struct SectionViewSimple2: View {
                     .background(buttonColor)
                     .cornerRadius(10)
             }
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 2)
+    }
+}
+
+struct SectionView3: View {
+    let title: String
+    let buttonText: String
+    let buttonAction: () -> Void
+    let buttonColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+                .underline()
+            Button(action: buttonAction) {
+                NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)
+                ){
+                    Text(buttonText)
+                        .bold()
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(buttonColor)
+                        .cornerRadius(10)
+                }
             }
         }
         .padding()
