@@ -27,7 +27,7 @@ struct BookFinderView: View {
                         .padding()
                 }
                 .listStyle(PlainListStyle())
-                taskBar()
+                taskBar(selectedTab: 2)
             }
             .navigationBarTitle(Text("Search Books"), displayMode: .large)
             .navigationBarItems(leading: backButton)
