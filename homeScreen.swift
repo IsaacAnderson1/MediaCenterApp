@@ -1,3 +1,4 @@
+
 import SwiftUI
 
 struct homeScreen: View {
@@ -7,6 +8,19 @@ struct homeScreen: View {
     var body: some View {
         NavigationView {
             VStack {
+                VStack {
+                    HStack{       Spacer()
+                        Image("ephslogo") // Ensure this image is in your assets
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 125, height: 125) // Adjust the size as needed
+                            .padding(.bottom, -40.0)
+                        
+                    };           Text("EPHS Media Center")
+                                       .font(.largeTitle)
+                                       
+                               }
+
                 VStack(alignment: .leading, spacing: 20) {
                     SectionView2(
                         title: "Find A Book",
@@ -79,8 +93,10 @@ struct homeScreen: View {
                 Spacer()
                 taskBar()
             }
+            
             .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-            .navigationBarTitle("EPHS Media Center", displayMode: .large).position(x: 200, y:350)
+            
+           // .navigationBarTitle("EPHS Media Center", displayMode: .large).position(x: 200, y:350)
             
             
         }
@@ -195,7 +211,7 @@ struct SectionViewSimple2: View {
             Text(title)
                 .font(.headline)
                 .underline()
-            Button(action: buttonAction) {                
+            Button(action: buttonAction) {
                 NavigationLink(destination: RequestFormView().navigationBarBackButtonHidden(true)
             ){
                 Text(buttonText)
