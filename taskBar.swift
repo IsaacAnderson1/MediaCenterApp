@@ -1,56 +1,67 @@
 import SwiftUI
 
 struct taskBar: View {
+    @State var selectedTab: Int
+    
     var body: some View {
-        VStack{
-            Divider()
-                .background(.black)
-            HStack(spacing: 60) { // Adjust the spacing between items
-                NavigationLink(destination: accountView().navigationBarBackButtonHidden(true)) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .resizable()
-                        .frame(width: 30, height: 30)
-                        .padding(10)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                        .foregroundColor(.black) // Set foreground color to black
-                }
-                
-                NavigationLink(destination: homeScreen().navigationBarBackButtonHidden(true)) {
-                    Image(systemName: "house.fill")
-                        .resizable()
-                        .frame(width: 30, height: 30)
-                        .padding(10)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                        .foregroundColor(.black) // Set foreground color to black
-                }
-                
-                NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)) {
-                    Image(systemName: "books.vertical.fill")
-                        .resizable()
-                        .frame(width: 30, height: 30)
-                        .padding(10)
-                        .background(Color.white)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.black, lineWidth: 1))
-                        .foregroundColor(.black) // Set foreground color to black
-                }
+        HStack() {
+            Spacer()
+  
+            NavigationLink(destination: accountView().navigationBarBackButtonHidden(true)) {
+                Image(systemName: selectedTab == 0 ? "person.crop.circle.fill" : "person.crop.circle")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(selectedTab == 0 ? .red : .black)
+                    .background(RoundedRectangle(cornerRadius: 15)
+                        .frame(width: 70.0, height: 50.0)
+                        .foregroundColor(.gray)
+                        .opacity(selectedTab == 0 ? 0.2 : 0) // Only show background when selectedTab is 0
+                        )
             }
-            .padding(.bottom, 10)
-            .frame(maxWidth: .infinity)
-            .frame(height: 80)
-            .background(Color.white) // Change background color of the task bar to white
+            Spacer()
             
-            .edgesIgnoringSafeArea(.bottom) // Ignore safe area for bottom edge
+
+            NavigationLink(destination: homeScreen().navigationBarBackButtonHidden(true)) {
+                Image(systemName: selectedTab == 1 ? "house.fill" : "house")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(selectedTab == 1 ? .red : .black)
+                    .background(RoundedRectangle(cornerRadius: 15)
+                        .frame(width: 70.0, height: 50.0)
+                        .foregroundColor(.gray)
+                        .opacity(selectedTab == 1 ? 0.2 : 0) // Only show background when selectedTab is 1
+                        )
+            }
+            Spacer()
+            
+
+            NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)) {
+                Image(systemName: selectedTab == 2 ? "books.vertical.fill" : "books.vertical")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(selectedTab == 2 ? .red : .black)
+                    .background(RoundedRectangle(cornerRadius: 15)
+                        .frame(width: 70.0, height: 50.0)
+                        .foregroundColor(.gray)
+                        .opacity(selectedTab == 2 ? 0.2 : 0) // Only show background when selectedTab is 2
+                        )
+            }
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: 60)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(radius: 5)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 5)
     }
 }
 
 struct TaskBar_Previews: PreviewProvider {
     static var previews: some View {
-        taskBar()
+        homeScreen()
     }
 }
