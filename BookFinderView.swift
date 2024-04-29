@@ -31,6 +31,10 @@ struct BookFinderView: View {
             }
             .navigationBarTitle(Text("Search Books"), displayMode: .large)
             .navigationBarItems(leading: backButton)
+            .navigationBarItems(trailing: Image("ephslogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 125, height: 125))
         }
     }
 
