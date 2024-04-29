@@ -136,8 +136,8 @@ struct accountView: View {
     var menuButton: some View {
         Menu(content: {
             Button("Profile", action: {})
-            Button("Contact", action: {})  // Added contact option
-            Button("Logout", action: {})   // Added logout option
+            Button("Contact", action: {})
+            Button("Logout and Close App", action: {exit(0)})
         }, label: {
             HStack {
                 Text("Menu")
