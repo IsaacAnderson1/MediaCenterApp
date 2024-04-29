@@ -91,7 +91,7 @@ struct homeScreen: View {
                 .frame(maxWidth: .infinity) // Ensures VStack takes full available width
 
                 Spacer()
-                taskBar()
+                taskBar(selectedTab: 1)
             }
             
             .background(Color(red: 0.95, green: 0.95, blue: 0.95))
