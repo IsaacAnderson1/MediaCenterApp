@@ -29,7 +29,11 @@ struct accountView: View {
                 }
             }
             .navigationBarTitle("EPHS Media Center", displayMode: .large)
-            .navigationBarItems(trailing: menuButton)
+            .navigationBarItems(leading: menuButton)
+            .navigationBarItems(trailing:  Image("ephslogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 125, height: 125))
             .onAppear(perform: loadReservedRooms)
         }
     }
