@@ -25,7 +25,7 @@ struct accountView: View {
                         .padding(.horizontal)
                     }
                     Spacer()
-                    taskBar()
+                    taskBar(selectedTab: 0)
                 }
             }
             .navigationBarTitle("EPHS Media Center", displayMode: .large)
