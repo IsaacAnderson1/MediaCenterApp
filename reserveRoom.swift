@@ -64,13 +64,20 @@ struct reserveRoom: View {
                 
                 NavigationLink(destination: ConfirmReservation(roomNumber: selectedRoom, date: selectedDate, period: selectedPeriod, userid: userid, onConfirm: {
                     confirmReservation(room: selectedRoom, date: selectedDate, period: selectedPeriod)
-                }), isActive: $navigateToConfirm) {
+                }).navigationBarBackButtonHidden(), isActive: $navigateToConfirm) {
                     EmptyView()
+                        
                 }
             }
             .navigationTitle("Reservation System")
+            
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: backButton)
+            .navigationBarItems(trailing:  Image("ephslogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 125, height: 125)
+            )
             .background(Color(.systemGray6))
             .alert(isPresented: $showAlert) {
                 Alert(
