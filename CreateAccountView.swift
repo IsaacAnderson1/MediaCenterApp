@@ -10,6 +10,7 @@ struct CreateAccountView: View {
     @State private var passwordDoNotMatch = 0
     @State private var showingLoginScreen = false
     @State private var errorMessage = ""
+    @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
@@ -35,7 +36,7 @@ struct CreateAccountView: View {
                             .scale(4.5)
                             .padding(.bottom, 250.0)
                             .foregroundColor(.white)
-
+                        
                         VStack {
                             Text("Sign Up")
                                 .font(.largeTitle)
@@ -66,7 +67,7 @@ struct CreateAccountView: View {
                                 .cornerRadius(10)
                                 .border(Color.red, width: CGFloat(passwordMatch))
                             if passwordDoNotMatch == 0 {
-
+                                
                             } else {
                                 Text("Passwords do not match")
                                     .foregroundColor(.red)
@@ -78,17 +79,27 @@ struct CreateAccountView: View {
                             .frame(width: 300, height: 50)
                             .background(Color(red: 0.761, green: 0.173, blue: 0.192))
                             .cornerRadius(10)
-
+                            
                             if !errorMessage.isEmpty {
                                 Text(errorMessage)
                                     .foregroundColor(.red)
                                     .padding()
                             }
-
+                            
                             NavigationLink(destination: homeScreen().navigationBarHidden(true), isActive: $showingLoginScreen) {
                                 EmptyView()
                             }
-                        }
+                            Button("Cancel") {
+                                presentationMode.wrappedValue.dismiss()
+                            }
+                            .foregroundColor(.white)
+                            .frame(width: 300, height: 50)
+                            .background(Color(red: 0.761, green: 0.173, blue: 0.192))
+                            .cornerRadius(10)
+                            .padding(.top, 20) // Adjust top padding as necessary
+                        
+                        }//vstack ends here
+                        
                         .position(CGPoint(x: 200, y: 50))
                     }
                     .position(CGPoint(x: 200, y: 175))
