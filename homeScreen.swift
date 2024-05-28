@@ -99,7 +99,7 @@ struct homeScreen: View {
            // .navigationBarTitle("EPHS Media Center", displayMode: .large).position(x: 200, y:350)
             
             
-        }
+        }.preferredColorScheme(.light)
     }
 }
 struct SectionView1: View {
