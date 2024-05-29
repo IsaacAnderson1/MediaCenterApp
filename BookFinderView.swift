@@ -48,7 +48,7 @@ struct BookFinderView: View {
     var body: some View {
         WebView(requestURL: URL(string: "https://edenpr.follettdestiny.com/common/welcome.jsp?context=saas087_2222558")!)
             .edgesIgnoringSafeArea(.all)
-        taskBar(selectedTab: 3)
+        taskBar(selectedTab: 2)
     }
 }
 
