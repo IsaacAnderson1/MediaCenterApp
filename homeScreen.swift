@@ -13,7 +13,7 @@ struct homeScreen: View {
                         Image("ephslogo") // Ensure this image is in your assets
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 125, height: 125) // Adjust the size as needed
+                            .frame(width: 75, height: 75) // Adjust the size as needed
                             .padding(.bottom, -40.0)
                         
                     };           Text("EPHS Media Center")
@@ -92,6 +92,9 @@ struct homeScreen: View {
 
                 Spacer()
                 taskBar(selectedTab: 1)
+                    .padding()
+                    
+                    
             }
             
             .background(Color(red: 0.95, green: 0.95, blue: 0.95))
@@ -243,7 +246,7 @@ struct SectionView3: View {
                 .font(.headline)
                 .underline()
             Button(action: buttonAction) {
-                NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)
+                NavigationLink(destination: PrinterInstructions().navigationBarBackButtonHidden(true)
                 ){
                     Text(buttonText)
                         .bold()
