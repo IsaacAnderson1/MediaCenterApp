@@ -23,13 +23,14 @@ struct reserveRoom: View {
     
     var dateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM-d-yyyy"  // Adjusted to match the document ID format
+        formatter.dateFormat = "MM-dd-yyyy"  // Adjusted to match the document ID format
         return formatter
     }
     
     var body: some View {
         NavigationView {
             VStack {
+                Text("You may only select days 7 days in advance.")
                 Button(action: {
                     self.showingDatePicker.toggle()
                 }) {
@@ -42,7 +43,7 @@ struct reserveRoom: View {
                 
                 if showingDatePicker {
                     DatePicker(
-                        "Select Date",
+                        "",
                         selection: $selectedDate,
                         in: Date()...Calendar.current.date(byAdding: .day, value: maxReservationDays, to: Date())!,
                         displayedComponents: .date
@@ -69,7 +70,7 @@ struct reserveRoom: View {
                         
                 }
             }
-            .navigationTitle("Reservation System")
+            .navigationTitle("Reservations")
             
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: backButton)
