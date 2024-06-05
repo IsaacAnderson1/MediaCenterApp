@@ -39,7 +39,7 @@ struct ConfirmReservation: View {
                 
                 HStack(spacing: 20) {
                     Button("Confirm") {
-                        onConfirm()  
+                        onConfirm()
                         presentationMode.wrappedValue.dismiss()
                     }
                     .padding()
