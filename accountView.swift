@@ -2,12 +2,7 @@ import SwiftUI
 import Firebase
 
 struct accountView: View {
-    // Example data for books - this would typically be fetched from a database or API
-    let reservedBooks = [
-        ("Book One", "May 1", "book_one_cover"),
-        ("Book Two", "May 5", "book_two_cover"),
-        ("Book Three", "May 10", "book_three_cover")
-    ]
+  
     @State private var reservedRooms: [String] = [] // State to hold room data
     
     var body: some View {
@@ -19,13 +14,41 @@ struct accountView: View {
                 VStack(alignment: .center, spacing: 10) {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 15) {
-                            bookSection
-                            roomSection
+                            
+                                roomSection
+                            Text("Show the librarians your reservation when you arrive")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.top, -10)
+                                .padding(.bottom, 30.0)
+                                
+                            
+                            
+                            
+                            VStack{
+                                NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)
+                                ){
+                                    HStack {
+                                        Text("Checked Out Books and Outstanding Fines").foregroundColor(.white)
+                                    }
+                                    .foregroundColor(customRed)
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.white)
+                                }
+                                }.fontWeight(.bold)
+                                .background(Rectangle().frame(width: 350.0, height: 65.0).cornerRadius(10).shadow(radius: 10).foregroundColor(customRed))
+                                .foregroundColor(.white)
+                            
                         }
                         .padding(.horizontal)
                     }
                     Spacer()
                     taskBar(selectedTab: 0)
+                    Text("Made by Isaac Anderson, Owen Peterson, and Leo Johnson")
+                        .font(.caption)
+                        .fontWeight(.thin)
+                        .foregroundColor(Color.gray)
+                        .multilineTextAlignment(.center)
                 }
             }
             .navigationBarTitle("EPHS Media Center", displayMode: .large)
@@ -38,56 +61,6 @@ struct accountView: View {
         }
     }
     
-    var bookSection: some View {
-        VStack {
-            Text("Your Books:")
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundColor(Color.white)
-                .padding(10)
-                .frame(maxWidth: .infinity)
-                .background(customRed) // Using custom red color
-                .cornerRadius(10)
-            
-            VStack(spacing: 10) { // Space between books
-                ForEach(reservedBooks, id: \.0) { book in
-                    bookEntry(book)
-                }
-            }
-            .background(Color.white) // White background for the book list
-            .cornerRadius(10)
-        }
-        .background(Color.white) // Consistent section background
-        .cornerRadius(12)
-        .shadow(radius: 5)
-    }
-    
-    func bookEntry(_ book: (String, String, String)) -> some View {
-        HStack {
-            Image(book.2)  // Assume book.2 is the image name
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 50, height: 70)
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.black, lineWidth: 2)  // Black border for contrast
-                )
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(book.0)
-                    .fontWeight(.medium)
-                Text("Due: \(book.1)")
-                    .font(.caption)
-                    .foregroundColor(Color.gray)
-            }
-            Spacer()
-        }
-        .padding()
-        .background(Color.white) // White card background
-        .cornerRadius(12)
-        .shadow(radius: 2)
-    }
     
     var roomSection: some View {
         Section(header: Text("Rooms Reserved:")
@@ -135,8 +108,6 @@ struct accountView: View {
     
     var menuButton: some View {
         Menu(content: {
-            Button("Profile", action: {})
-            Button("Contact", action: {})
             Button("Logout and Close App", action: {exit(0)})
         }, label: {
             HStack {
