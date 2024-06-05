@@ -72,6 +72,9 @@ struct CreateAccountView: View {
                                 Text("Passwords do not match")
                                     .foregroundColor(.red)
                             }
+                            Text("Password must be at least 6 characters")
+                                .font(.caption)
+                                .foregroundColor(Color.gray)
                             Button("Create Account") {
                                 checkSignUp(username: username, password: password, confirmPassword: confirmPassword)
                             }
