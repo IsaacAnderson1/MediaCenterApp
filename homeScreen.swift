@@ -24,7 +24,7 @@ struct homeScreen: View {
                 VStack(alignment: .leading, spacing: 20) {
                     SectionView2(
                         title: "Find A Book",
-                        description: "See if the media center has a book and where it might be.",
+                        description: "See if the media center has a book and the book location.",
                         buttonText: "Find a Book",
                         buttonAction: {
                             // Navigate to book finder
@@ -34,7 +34,7 @@ struct homeScreen: View {
                     
                     SectionView1(
                         title: "Media Center Account",
-                        description: "See what books you have checked out, what fees you have to pay, etc.",
+                        description: "Check your rooms reserved, unpaid fees, etc.",
                         buttonText: "Account",
                         buttonAction: {
                             // Navigate to account page
@@ -93,6 +93,8 @@ struct homeScreen: View {
                 Spacer()
                 taskBar(selectedTab: 1)
                     .padding()
+                    .frame(height: 150.0)
+                
                     
                     
             }
@@ -118,7 +120,7 @@ struct SectionView1: View {
                 .font(.headline)
                 .underline()
             Text(description)
-                .font(.subheadline)
+                .font(.caption)
             Button(action: buttonAction) {
                 NavigationLink(destination: accountView().navigationBarBackButtonHidden(true)
                 ){
@@ -152,7 +154,7 @@ struct SectionView2: View {
                 .font(.headline)
                 .underline()
             Text(description)
-                .font(.subheadline)
+                .font(.caption)
             Button(action: buttonAction) {
                 NavigationLink(destination: BookFinderView().navigationBarBackButtonHidden(true)
                 ){
