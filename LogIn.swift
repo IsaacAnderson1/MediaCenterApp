@@ -23,30 +23,37 @@ struct Login: View {
                         .background(Rectangle().foregroundColor(Color(red: 0.725, green: 0.0, blue: 0.0)))
                         .foregroundColor(.white)
                         .position(x: 200, y: -30)
-                        .padding(.top, 65.0)
+                        .padding(.top, 5.0)
                     
                     ZStack {
+                        
                         Circle()
-                            .scale(5)
+                            .scale(6)
                             .padding(.bottom, 250.0)
                             .foregroundColor(.white.opacity(0.15))
+                            .position(x:200, y:70)
                         Circle()
-                            .scale(4)
+                            .scale(5.5)
                             .padding(.bottom, 250.0)
                             .foregroundColor(.white)
+                            .position(x:200, y:70)
                         
                         VStack {
                             Text("Login")
                                 .font(.largeTitle)
                                 .bold()
                                 .padding()
+                                .foregroundColor(.black)
                             TextField("Username (Email)", text: $username)
+                            
                                 .padding()
                                 .autocapitalization(.none)
                                 .frame(width: 300, height: 50)
                                 .background(Color.black.opacity(0.05))
                                 .cornerRadius(10)
                                 .border(Color.red, width: CGFloat(authenticationFailed ? 2 : 0))
+                                .foregroundColor(.black)
+                            
                             
                             SecureField("Password", text: $password)
                                 .padding()
@@ -54,6 +61,7 @@ struct Login: View {
                                 .frame(width: 300, height: 50)
                                 .background(Color.black.opacity(0.05))
                                 .cornerRadius(10)
+                                .foregroundColor(.black)
                                 .border(Color.red, width: CGFloat(authenticationFailed ? 2 : 0))
                             
                             if !errorMessage.isEmpty {
@@ -85,13 +93,18 @@ struct Login: View {
                                         .foregroundColor(.white)
                                 }
                             }
+                            
                         }
-                        .position(CGPoint(x: 200, y: 65))
+                        .position(x:200, y:-80)
+                        .padding(.bottom, 200.0)
+                        
                     }
-                    .position(CGPoint(x: 200, y: 175.0))
+                    
                 }
             }
-        }
+            
+        }.preferredColorScheme(.light)
+    
     }
     
     func authenticateUser(username: String, password: String) {
